@@ -38,5 +38,3 @@ Feel free to open an issue on GitHub if you need further assistance or have any 
 ### License
 
 This project is licensed under the MIT License.
-
-Feel free to adjust the content to better suit your project's style and needs! Let me know if there's anything else you'd like to add or modify.
