@@ -49,6 +49,9 @@ const int stepsPerRevolution = 2038;
 // Creates an instance of stepper class
 // Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
 Stepper stepper = Stepper(stepsPerRevolution, 13, 11, 12, 10);
+const int openSteps = 19000;
+const int closeSteps = -18000;
+
 
 // RTC:
 // uRTCLib rtc; Creates RTC information
@@ -287,74 +290,8 @@ void openClock() {
   lcd.print(":");
 
   // Instanstiates the time string as a empty string
-  String time = "";
-  while (time.length() < 4) {
-    // Gets the user input
-    char key = pad.getKey();
-    // If it's a digit it gets added to the string
-    if (isdigit(key)) {
-      time += key; // Append the digit to the time string
-      lcd.setCursor(6, 0);
-        // Based on the length of the time string it is displayed on the screen differently relative to the colon
-        switch (time.length()) {
-        case 1:
-        lcd.print("  : " + time);
-        break;
-        case 2:
-        lcd.print("  :" + time);    
-        break; 
-        case 3:
-        lcd.print(" " + time.substring(0, 1) + ":" + time.substring(1, time.length()));            
-        break; 
-        case 4:
-        lcd.print(time.substring(0,2) + ":" + time.substring(2, time.length()));  
-        break; 
-        }
-    } else if (key == '#') { // Backspace functionality
-      if (time.length() > 0){
-        // Removes the last character from the time string
-        time = time.substring(0,time.length() - 1);
-        lcd.setCursor(6, 0);
-        // Based on the length of the time string it is displayed on the screen differently relative to the colon
-        switch (time.length()) {
-        case 0:
-        lcd.setCursor(6, 0);
-        lcd.print("  :  ");
-        break;
-        case 1:
-        lcd.print("  : " + time);
-        break;
-        case 2:
-        lcd.print("  :" + time);    
-        break; 
-        case 3:
-        lcd.print(" " + time.substring(0, 1) + ":" + time.substring(1, time.length()));            
-        break; 
-        case 4:
-        lcd.print(time.substring(0,2) + ":" + time.substring(2, time.length()));  
-        break; 
-        }
-      }
-    } else if (key == '*') {
-        currentState = STATE_MAIN_MENU;
-        mainMenu(); // Go back to the main menu
-        break; // Exit the loop to prevent further input
-    } else if (key == 'D') { // If key is 'D' the time is entered
-        break;
-    }
-  }
-
+  String time = getTimeString();
   delay(2000);
-
-  // Checks if the time entered is valid, if not it returns to main menu
-  if (!isTimeValid(time)) {
-    lcd.setCursor(6, 0);
-    lcd.print("Invalid.");
-    delay(2000);
-    currentState = STATE_MAIN_MENU;
-    mainMenu();
-    return;
-  }
 
   // Prints the AM or PM selection menu
   lcd.clear();
@@ -431,74 +368,8 @@ void closeClock() {
   lcd.setCursor(8,0);
   lcd.print(":");
 
-  // Instanstiates the time string as a empty string
-  String time = "";
-  while (time.length() < 4) {
-    char key = pad.getKey();
-    // If it's a digit it gets added to the string
-    if (isdigit(key)) {
-      time += key; // Append the digit to the time string
-      lcd.setCursor(6, 0);
-        // Based on the length of the time string it is displayed on the screen differently relative to the colon
-        switch (time.length()) {
-        case 1:
-        lcd.print("  : " + time);
-        break;
-        case 2:
-        lcd.print("  :" + time);    
-        break; 
-        case 3:
-        lcd.print(" " + time.substring(0, 1) + ":" + time.substring(1, time.length()));            
-        break; 
-        case 4:
-        lcd.print(time.substring(0,2) + ":" + time.substring(2, time.length()));  
-        break; 
-        }
-    } else if (key == '#') { // Backspace functionality
-      if (time.length() > 0){
-        // Removes the last character from the time string
-        time = time.substring(0,time.length() - 1);
-        lcd.setCursor(6, 0);
-        // Based on the length of the time string it is displayed on the screen differently relative to the colon
-        switch (time.length()) {
-        case 0:
-        lcd.setCursor(6, 0);
-        lcd.print("  :  ");
-        break;
-        case 1:
-        lcd.print("  : " + time);
-        break;
-        case 2:
-        lcd.print("  :" + time);    
-        break; 
-        case 3:
-        lcd.print(" " + time.substring(0, 1) + ":" + time.substring(1, time.length()));            
-        break; 
-        case 4:
-        lcd.print(time.substring(0,2) + ":" + time.substring(2, time.length()));  
-        break; 
-        }
-      }
-    } else if (key == '*') {
-        currentState = STATE_MAIN_MENU;
-        mainMenu(); // Go back to the main menu
-        break; // Exit the loop to prevent further input
-    } else if (key == 'D') { // If key is 'D' the time is entered
-        break;
-    }
-  }
-
+  string time = getTimeString();
   delay(2000);
-
-  // Checks if the time entered is valid, if not it returns to main menu
-  if (!isTimeValid(time)) {
-    lcd.setCursor(6, 0);
-    lcd.print("Invalid.");
-    delay(2000);
-    currentState = STATE_MAIN_MENU;
-    mainMenu();
-    return;
-  }
 
   // Prints the AM or PM selection menu
   lcd.clear();
@@ -556,6 +427,89 @@ void closeClock() {
 }
 
 /**
+ * @brief Retrieves the time string entered by the user.
+ * 
+ * This function prompts the user to input a time string using the keypad.
+ * The user can input digits (0-9) to construct the time string.
+ * The time string represents hours and minutes in 24-hour format (HHMM).
+ * The user can use the '#' key to delete the last entered digit.
+ * The user confirms the time string by pressing the 'D' key.
+ * If the user presses '*', the function returns to the main menu.
+ * 
+ * @return The time string entered by the user.
+ */
+string getTimeString() {
+  // Instanstiates the time string as a empty string
+  String time = "";
+  while (time.length() < 4) {
+    char key = pad.getKey();
+    // If it's a digit it gets added to the string
+    if (isdigit(key)) {
+      time += key; // Append the digit to the time string
+      lcd.setCursor(6, 0);
+        // Based on the length of the time string it is displayed on the screen differently relative to the colon
+        switch (time.length()) {
+        case 1:
+        lcd.print("  : " + time);
+        break;
+        case 2:
+        lcd.print("  :" + time);    
+        break; 
+        case 3:
+        lcd.print(" " + time.substring(0, 1) + ":" + time.substring(1, time.length()));            
+        break; 
+        case 4:
+        lcd.print(time.substring(0,2) + ":" + time.substring(2, time.length()));  
+        break; 
+        }
+    } else if (key == '#') { // Backspace functionality
+      if (time.length() > 0){
+        // Removes the last character from the time string
+        time = time.substring(0,time.length() - 1);
+        lcd.setCursor(6, 0);
+        // Based on the length of the time string it is displayed on the screen differently relative to the colon
+        switch (time.length()) {
+        case 0:
+        lcd.setCursor(6, 0);
+        lcd.print("  :  ");
+        break;
+        case 1:
+        lcd.print("  : " + time);
+        break;
+        case 2:
+        lcd.print("  :" + time);    
+        break; 
+        case 3:
+        lcd.print(" " + time.substring(0, 1) + ":" + time.substring(1, time.length()));            
+        break; 
+        case 4:
+        lcd.print(time.substring(0,2) + ":" + time.substring(2, time.length()));  
+        break; 
+        }
+      }
+    } else if (key == '*') {
+        currentState = STATE_MAIN_MENU;
+        mainMenu(); // Go back to the main menu
+        break; // Exit the loop to prevent further input
+    } else if (key == 'D') { // If key is 'D' the time is entered
+        break;
+    }
+  }
+
+  // Checks if the time entered is valid, if not it returns to main menu
+  if (!isTimeValid(time)) {
+    lcd.setCursor(6, 0);
+    lcd.print("Invalid.");
+    delay(2000);
+    currentState = STATE_MAIN_MENU;
+    mainMenu();
+    return;
+  }
+
+  return time;
+}
+
+/**
  * @brief Opens the door if it is not already open.
  *
  * This function checks if the door is already open. If it is closed, it opens the door by
@@ -571,7 +525,7 @@ void open() {
 
     // Set the speed of the stepper motor and rotate it clockwise to open the door
     stepper.setSpeed(10);
-    stepper.step(19000); // Clockwise rotation
+    stepper.step(openSteps); // Clockwise rotation
     delay(1000);
 
     // Update the state variable to indicate that the door is now open
@@ -599,7 +553,7 @@ void close() {
 
     // Set the speed of the stepper motor and rotate it counterclockwise to close the door
     stepper.setSpeed(10);
-    stepper.step(-18000); // Counterclockwise rotation
+    stepper.step(closeSteps); // Counterclockwise rotation
     delay(1000);
 
     // Update the state variable to indicate that the door is now closed
